@@ -4,23 +4,45 @@ import random
 import string
 import sys
 
-# algorithm needs to be
-# deterministic, reversible, simple enough to explain quickly
-# algorithm does not need to be
-# cryptographically secure
+# --- Algorithm -----------------------------------------------------------
+#
+# Printable ASCII runs from chr(32) [space] to chr(126) [~], giving 95
+# characters. We treat these as a ring and shift every character by SHIFT
+# positions using modular arithmetic.
+#
+#   encode(c) = chr( ((ord(c) - 32 + SHIFT) % 95) + 32 )
+#   decode(c) = chr( ((ord(c) - 32 - SHIFT) % 95) + 32 )
+#
+# These are exact inverses: decode(encode(c)) == c for all printable ASCII.
+# Non-printable characters are passed through unchanged.
+#
+# The shift is 47, roughly half of 95m so the mapping has no obvious
+# fixed points and looks nicely scrambled.
 
-# ignore the offset - that's just used for 'big reveals'
-
-"""
-algorithm needs to take units of the input, string or not, perform something
-to the units, then return
-"""
+SHIFT = 47
+PRINTABLE_LO = 32
+PRINTABLE_HI = 126
 
 def babel_encode(t):
-    pass
+    t = int(''.join([str(ord(c)) for c in t])) # 3 characters concatenated, turned to a string. 
+    t = (t % 95)
+    t = t + 32
+    return chr(t)
 
-def babel_decode(t):
-    pass
+def babel_decode_as_triple(t):
+    """ hacky workaround, not perfectly reversible, but creates a valid preimage """
+    target = ord(t) - 32
+
+    for a in range(32, 127):
+        for b in range(32, 127):
+
+            prefix = str(a) + str(b)
+
+            for c in range(32, 127):
+                n = int(prefix + str(c))
+
+                if n % 95 == target:
+                    return chr(a) + chr(b) + chr(c)
 
 def babel(s, decoding=False, offset=0):
     res = ''

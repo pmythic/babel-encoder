@@ -42,16 +42,40 @@ def babel_encode(t):
     t = t + PRINTABLE_LO
     return chr(t)
 
-def babel_decode(t):
+
+def babel_decode(t, num_candidates=5):
     target = ord(t) - PRINTABLE_LO
-    concat = ''
-    for a in range(PRINTABLE_LO, PRINTABLE_HI+1):
-        for b in range(PRINTABLE_LO, PRINTABLE_HI+1):
-            for c in range(PRINTABLE_LO, PRINTABLE_HI+1):
-                concat = ''.join([str(a), str(b), str(c)])
-                if int(concat) % 95 == target:
-                    return chr(a)+chr(b)+chr(c)
-    return concat
+    candidates = []
+    seen = set()
+ 
+    # Randomly sample (a, b) pairs and find a valid c for each.
+    # ~70-90% of random pairs have a valid c, so this converges quickly.
+    for _ in range(num_candidates * 20):
+        if len(candidates) >= num_candidates:
+            break
+        a = random.randint(PRINTABLE_LO, PRINTABLE_HI)
+        b = random.randint(PRINTABLE_LO, PRINTABLE_HI)
+        if (a, b) in seen:
+            continue
+        seen.add((a, b))
+        for c in range(PRINTABLE_LO, PRINTABLE_HI + 1):
+            if int(str(a) + str(b) + str(c)) % 95 == target:
+                candidates.append(chr(a) + chr(b) + chr(c))
+                break
+ 
+    if candidates:
+        return random.choice(candidates)
+ 
+    # Fallback: deterministic search (always finds a result)
+    for a in range(PRINTABLE_LO, PRINTABLE_HI + 1):
+        for b in range(PRINTABLE_LO, PRINTABLE_HI + 1):
+            for c in range(PRINTABLE_LO, PRINTABLE_HI + 1):
+                if int(str(a) + str(b) + str(c)) % 95 == target:
+                    return chr(a) + chr(b) + chr(c)
+    return ''
+
+
+
 
 def babel(s, decoding=False, offset=0):
     res = ''

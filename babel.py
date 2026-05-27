@@ -36,52 +36,38 @@ PRINTABLE_LO = 32
 PRINTABLE_HI = 126
 
 def babel_encode(t):
-    t = int(''.join([str(ord(c)) for c in t])) # 3 characters concatenated, turned to a string. 
+    concat = ''.join([str(ord(c)) for c in t]) # 3 characters concatenated, turned to a string. 
+    t = int(concat) 
     t = (t % 95)
     t = t + PRINTABLE_LO
     return chr(t)
 
-def babel_decode_as_triple(t) -> str:
-    """ hacky workaround, not perfectly reversible, but creates a valid preimage """
+def babel_decode(t):
     target = ord(t) - PRINTABLE_LO
-
+    concat = ''
     for a in range(PRINTABLE_LO, PRINTABLE_HI+1):
         for b in range(PRINTABLE_LO, PRINTABLE_HI+1):
-
-            prefix = str(a) + str(b)
-
             for c in range(PRINTABLE_LO, PRINTABLE_HI+1):
-                n = int(prefix + str(c))
-
-                if n % 95 == target:
-                    return ''.join([chr(a), chr(b), chr(c)])
-
-    return ''
+                concat = ''.join([str(a), str(b), str(c)])
+                if int(concat) % 95 == target:
+                    return chr(a)+chr(b)+chr(c)
+    return concat
 
 def babel(s, decoding=False, offset=0):
     res = ''
     if decoding:
-        pad_len = ord(s[0]) - 32
-        s = s[1:]
-
         if offset:
             res += gen_offset(offset)
         for c in s:
-            res += babel_decode_as_triple(c)
-        if pad_len:
-            res = res[:-pad_len]
+            triple = babel_decode(c)
+            res = res + triple
 
     else:
-        pad_len = (3 - (len(s) % 3)) % 3
-        s_padded = s + (" " * pad_len)
-
         res = ""
-        for i in range(0, len(s_padded), 3):
-            res += babel_encode(s_padded[i:i+3])
+        for i in range(0, len(s), 3):
+            res += babel_encode(s[i:i+3])
 
-        # prepend padding metadata as a single character
-        res = chr(pad_len + 32) + res
-        return res
+    return res
 
 def gen_offset(n):
     """generate randomised offset string of length n"""

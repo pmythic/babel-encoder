@@ -7,55 +7,81 @@ import sys
 # --- Algorithm -----------------------------------------------------------
 #
 # Printable ASCII runs from chr(32) [space] to chr(126) [~], giving 95
-# characters. We treat these as a ring and shift every character by SHIFT
-# positions using modular arithmetic.
+# characters total.
 #
-#   encode(c) = chr( ((ord(c) - 32 + SHIFT) % 95) + 32 )
-#   decode(c) = chr( ((ord(c) - 32 - SHIFT) % 95) + 32 )
+# Encoding projects an arbitrarily large integer into the printable ASCII
+# range using modulo arithmetic.
 #
-# These are exact inverses: decode(encode(c)) == c for all printable ASCII.
-# Non-printable characters are passed through unchanged.
+#   encode(n) = chr((n % 95) + 32)
 #
-# The shift is 47, roughly half of 95m so the mapping has no obvious
-# fixed points and looks nicely scrambled.
+# Decoding cannot uniquely recover n, because modulo discards information.
+# Instead, decode represents the entire equivalence class:
+#
+#   decode(c) = (ord(c) - 32) + 95k
+#
+# where k is any nonnegative integer.
+#
+# These are inexact inverses:
+#
+#   encode(decode(c)) == c
+#
+# but generally:
+#
+#   decode(encode(n)) != n
+#
+# because many distinct integers map to the same encoded character.
+# ------------------------------------------------------------------------
 
-SHIFT = 47
 PRINTABLE_LO = 32
 PRINTABLE_HI = 126
 
 def babel_encode(t):
     t = int(''.join([str(ord(c)) for c in t])) # 3 characters concatenated, turned to a string. 
     t = (t % 95)
-    t = t + 32
+    t = t + PRINTABLE_LO
     return chr(t)
 
-def babel_decode_as_triple(t):
+def babel_decode_as_triple(t) -> str:
     """ hacky workaround, not perfectly reversible, but creates a valid preimage """
-    target = ord(t) - 32
+    target = ord(t) - PRINTABLE_LO
 
-    for a in range(32, 127):
-        for b in range(32, 127):
+    for a in range(PRINTABLE_LO, PRINTABLE_HI+1):
+        for b in range(PRINTABLE_LO, PRINTABLE_HI+1):
 
             prefix = str(a) + str(b)
 
-            for c in range(32, 127):
+            for c in range(PRINTABLE_LO, PRINTABLE_HI+1):
                 n = int(prefix + str(c))
 
                 if n % 95 == target:
-                    return chr(a) + chr(b) + chr(c)
+                    return ''.join([chr(a), chr(b), chr(c)])
+
+    return ''
 
 def babel(s, decoding=False, offset=0):
     res = ''
     if decoding:
+        pad_len = ord(s[0]) - 32
+        s = s[1:]
+
         if offset:
             res += gen_offset(offset)
-        for i, c in enumerate(s):
-            pass
-    else:
-        for i, c in enumerate(s):
-            pass
+        for c in s:
+            res += babel_decode_as_triple(c)
+        if pad_len:
+            res = res[:-pad_len]
 
-    return res
+    else:
+        pad_len = (3 - (len(s) % 3)) % 3
+        s_padded = s + (" " * pad_len)
+
+        res = ""
+        for i in range(0, len(s_padded), 3):
+            res += babel_encode(s_padded[i:i+3])
+
+        # prepend padding metadata as a single character
+        res = chr(pad_len + 32) + res
+        return res
 
 def gen_offset(n):
     """generate randomised offset string of length n"""

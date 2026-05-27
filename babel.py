@@ -3,6 +3,7 @@ import argparse
 import random
 import string
 import sys
+import subprocess
 
 # --- Algorithm -----------------------------------------------------------
 #
@@ -97,11 +98,22 @@ def gen_offset(n):
     """generate randomised offset string of length n"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
+def gen_pi(n):
+    """generate n digits of pi. Use Chudnovsky's formula via a C program"""
+    return str(n)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
+    exclusive_group = parser.add_mutually_exclusive_group()
+    exclusive_group.add_argument(
+        '-p', '-pi', '--pi',
+        type=int,
+        dest='pi',
+        help='Use <input> digits of pi for encoding'
+    )
+
+    exclusive_group.add_argument(
         '-f', '--file', '--filename',
         action="store_true",
         dest='file_provided',
@@ -110,7 +122,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         'input',
-        nargs='+',
+        nargs='*', 
         help='File name (read in bytes), or input (depending on if -f flag set)'
     )
 
@@ -135,15 +147,28 @@ if __name__ == "__main__":
     if args.offset and not args.decode:
         parser.error("--offset requires --decode. Use it to 'reveal' a string after <offset> characters.")
 
-    if args.file_provided:
-        if not args.input:
-            parser.error('-f requires a filename')
-        with open(args.input[0], "rb") as f:
-            text = f.read()
-    elif args.input:
-        text = " ".join(args.input)
+    if args.pi is not None:
+        # pi is intended to be mutually exclusive with everything else
+        if args.file_provided or args.decode or args.input:
+            parser.error("--pi is mutually exclusive with file input, decoding, offset, and normal input")
+        try:
+            if args.pi < 3:
+                parser.error("pi must have >3 digits")
+            text = "".join(gen_pi(args.pi))
+        except Exception as e:
+            parser.error(f"pi encoding failed: {e}")
     else:
-        text = sys.stdin.read()
+        if args.file_provided:
+            if not args.input:
+                parser.error('-f requires a filename')
+            with open(args.input[0], "rb") as f:
+                text = f.read()
+        elif args.input:
+            if len(args.input) < 3:
+                parser.error('input must be >2 characters')
+            text = " ".join(args.input)
+        else:
+            text = sys.stdin.read()
 
     out = babel(text, decoding=args.decode, offset=args.offset)
     print(out)

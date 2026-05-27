@@ -162,11 +162,11 @@ if __name__ == "__main__":
             if not args.input:
                 parser.error('-f requires a filename')
             with open(args.input[0], "rb") as f:
-                text = f.read()
+                text = f.read().decode("utf-8", errors="replace") # TODO: verify works
         elif args.input:
-            if len(args.input) < 3:
-                parser.error('input must be >2 characters')
             text = " ".join(args.input)
+            if len(text) < 3:
+                parser.error('input must at least 3 characters')
         else:
             text = sys.stdin.read()
 

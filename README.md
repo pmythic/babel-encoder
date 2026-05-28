@@ -6,7 +6,7 @@
 
 ## Overview
 
-Babel is a command-line encoding tool that transforms arbitrary data into streams of printable ASCII characters using a deterministic reversible mapping.
+Babel is a command-line encoding tool that transforms arbitrary data into streams of printable ASCII characters using a deterministic, sort-of-reversible mapping.
 
 The project was originally created as a companion artifact for the video essay:
 

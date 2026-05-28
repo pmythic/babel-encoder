@@ -4,6 +4,7 @@ import string
 import sys
 import subprocess
 import os
+from pathlib import Path
 
 # --- Algorithm -----------------------------------------------------------
 #
@@ -101,9 +102,15 @@ def gen_offset(n: int) -> str:
 
 def gen_pi(n: int) -> str:
     """generate n digits of pi. Use Chudnovsky's formula via a C program"""
-    _ = subprocess.run(['gcc', '-o', 'chudnovsky', 'chudnovsky.c'], check=True)
+    root = Path(__file__).parent
+
+    src_path = root / 'chudnovsky.c'
+    bin_path = root / 'chudnovsky'
+
+    if (not bin_path.exists()) or src_path.stat().st_mtime > bin_path.stat().st_mtime:
+        _ = subprocess.run(['gcc', 'chudnovsky.c', '-O2', '-lgmp', '-o', 'chudnovsky'], check=True)
     digits = subprocess.run(['./chudnovsky', str(n)], capture_output=True, text=True, check=True)
-    return str(digits.stdout).strip()
+    return digits.stdout.strip()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -140,7 +140,7 @@ if __name__ == "__main__":
         type=int,
         default=0,
         required=False,
-        help='Reveal-offset when decoding'
+        help='Prepend N random chars to decoded output for a reveal effect. Must be a multiple of 3 (auto-rounded down if not).'
     )
 
     args = parser.parse_args()
@@ -163,17 +163,22 @@ if __name__ == "__main__":
             if not args.input:
                 parser.error('-f requires a filename')
             with open(args.input[0], "rb") as f:
-                text = f.read().decode("utf-8", errors="replace") # TODO: verify works
+                text = f.read().decode("utf-8", errors="replace").removesuffix('\n')
         elif args.input:
             text = " ".join(args.input)
             if len(text) < 3:
                 parser.error('input must at least 3 characters')
         else:
             if not os.isatty(0):
-                text = sys.stdin.read()
+                text = sys.stdin.read().removesuffix('\n')
             else:
                 if not args.input:
                     parser.error("input not provided")
+
+    if args.offset % 3 != 0:
+        adjusted = (args.offset // 3) * 3
+        print(f"Warning: offset {args.offset} is not a multiple of 3 — rounding down to {adjusted}.", file=sys.stderr)
+        args.offset = adjusted
 
     out = babel(text, decoding=args.decode, offset=args.offset)
     print(out)

@@ -1,4 +1,3 @@
-#pyright: basic
 import argparse
 import random
 import string
@@ -37,18 +36,18 @@ import os
 PRINTABLE_LO = 32
 PRINTABLE_HI = 126
 
-def babel_encode(t):
+def babel_encode(t: str) -> str:
     concat = ''.join([str(ord(c)) for c in t]) # 3 characters concatenated, turned to a string. 
-    t = int(concat) 
-    t = (t % 95)
-    t = t + PRINTABLE_LO
-    return chr(t)
+    ic = int(concat) 
+    ic = (ic % 95)
+    ic = ic + PRINTABLE_LO
+    return chr(ic)
 
 
-def babel_decode(t, num_candidates=5):
+def babel_decode(t: str, num_candidates: int = 5) -> str:
     target = ord(t) - PRINTABLE_LO
-    candidates = []
-    seen = set()
+    candidates: list[str] = []
+    seen: set[tuple[int, int]] = set()
  
     # Randomly sample (a, b) pairs and find a valid c for each.
     # ~70-90% of random pairs have a valid c, so this converges quickly.
@@ -79,7 +78,7 @@ def babel_decode(t, num_candidates=5):
 
 
 
-def babel(s, decoding=False, offset=0):
+def babel(s: str, decoding: bool = False, offset: int = 0) -> str:
     res = ''
     if decoding:
         if offset:
@@ -95,33 +94,36 @@ def babel(s, decoding=False, offset=0):
 
     return res
 
-def gen_offset(n):
+def gen_offset(n: int) -> str:
     """generate randomised offset string of length n"""
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
+    alphabet: str = string.ascii_letters + string.digits
+    return ''.join(random.choices(alphabet, k=n))
 
-def gen_pi(n):
+def gen_pi(n: int) -> str:
     """generate n digits of pi. Use Chudnovsky's formula via a C program"""
-    return str(n)
+    _ = subprocess.run(['gcc', '-o', 'chudnovsky', 'chudnovsky.c'], check=True)
+    digits = subprocess.run(['./chudnovsky', str(n)], capture_output=True, text=True, check=True)
+    return str(digits.stdout).strip()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     exclusive_group = parser.add_mutually_exclusive_group()
-    exclusive_group.add_argument(
+    _ = exclusive_group.add_argument(
         '-p', '-pi', '--pi',
         type=int,
         dest='pi',
         help='Use <input> digits of pi for encoding'
     )
 
-    exclusive_group.add_argument(
+    _ = exclusive_group.add_argument(
         '-f', '--file', '--filename',
         action="store_true",
         dest='file_provided',
         help='Treat input as filename'
     )
 
-    parser.add_argument(
+    _ = parser.add_argument(
         'input',
         nargs='*', 
         help='File name (read in bytes), or input (depending on if -f flag set)'
@@ -129,13 +131,13 @@ if __name__ == "__main__":
 
     decode_group = parser.add_argument_group('decoding')
 
-    decode_group.add_argument(
+    _ = decode_group.add_argument(
         '-d', '--decode',
         action='store_true',
         help='Decode instead of encode'
     )
 
-    decode_group.add_argument(
+    _ = decode_group.add_argument(
         '--offset',
         type=int,
         default=0,
@@ -144,6 +146,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    text = ''
 
     if args.offset and not args.decode:
         parser.error("--offset requires --decode. Use it to 'reveal' a string after <offset> characters.")
@@ -177,7 +180,7 @@ if __name__ == "__main__":
 
     if args.offset % 3 != 0:
         adjusted = (args.offset // 3) * 3
-        print(f"Warning: offset {args.offset} is not a multiple of 3 — rounding down to {adjusted}.", file=sys.stderr)
+        print(f"\nWarning: offset {args.offset} is not a multiple of 3 — rounding down to {adjusted}.\n", file=sys.stderr)
         args.offset = adjusted
 
     out = babel(text, decoding=args.decode, offset=args.offset)

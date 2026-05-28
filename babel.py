@@ -4,6 +4,7 @@ import random
 import string
 import sys
 import subprocess
+import os
 
 # --- Algorithm -----------------------------------------------------------
 #
@@ -168,7 +169,11 @@ if __name__ == "__main__":
             if len(text) < 3:
                 parser.error('input must at least 3 characters')
         else:
-            text = sys.stdin.read()
+            if not os.isatty(0):
+                text = sys.stdin.read()
+            else:
+                if not args.input:
+                    parser.error("input not provided")
 
     out = babel(text, decoding=args.decode, offset=args.offset)
     print(out)

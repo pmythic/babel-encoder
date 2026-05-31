@@ -12,11 +12,16 @@ def tostr(bigint):
     digits.reverse()
     return "".join(digits)
 
+# Based on the exposition and Python implementation by Nick Craig-Wood:
+# https://www.craig-wood.com/nick/articles/pi-chudnovsky/
+#
+# The underlying mathematical formula is the Chudnovsky algorithm
+# (Chudnovsky brothers, 1988), derived from Ramanujan-type series.
+#
+# This implementation has been adapted/modified for use in this project.
 def pi_chudnovsky(digits=100):
     """
     Calculate pi using Chudnovsky's series
-
-    This calculates it in fixed point, using the value for one passed in
     """
     one= 10**digits
 

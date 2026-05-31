@@ -5,6 +5,7 @@ import sys
 import subprocess
 import os
 from pathlib import Path
+from chudnovsky import pi_chudnovsky
 
 # --- Algorithm -----------------------------------------------------------
 #
@@ -100,7 +101,12 @@ def gen_offset(n: int) -> str:
     alphabet: str = string.ascii_letters + string.digits
     return ''.join(random.choices(alphabet, k=n))
 
-def gen_pi(n: int) -> str:
+def gen_pi_py(n: int) -> str:
+    """generate n digits of pi. Use Chudnovsky's formula via a simple python implementation"""
+    return pi_chudnovsky(n)
+
+
+def gen_pi_c(n: int) -> str:
     """generate n digits of pi. Use Chudnovsky's formula via a C program"""
     root = Path(__file__).parent
 
@@ -108,8 +114,9 @@ def gen_pi(n: int) -> str:
     bin_path = root / 'chudnovsky'
 
     if (not bin_path.exists()) or src_path.stat().st_mtime > bin_path.stat().st_mtime:
-        _ = subprocess.run(['gcc', 'chudnovsky.c', '-O2', '-lgmp', '-o', 'chudnovsky'], check=True)
-    digits = subprocess.run(['./chudnovsky', str(n)], capture_output=True, text=True, check=True)
+        _ = subprocess.run(['make', 'clean'], check=True)
+        _ = subprocess.run(['make'], check=True)
+    digits = subprocess.run(['make', 'run', f'N={str(n)}'], capture_output=True, text=True, check=True)
     return digits.stdout.strip()
 
 if __name__ == "__main__":
@@ -165,7 +172,7 @@ if __name__ == "__main__":
         try:
             if args.pi < 3:
                 parser.error("pi must have >3 digits")
-            text = "".join(gen_pi(args.pi))
+            text = "".join(gen_pi_py(args.pi))
         except Exception as e:
             parser.error(f"pi encoding failed: {e}")
     else:

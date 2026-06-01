@@ -1,16 +1,12 @@
 # Babel
 
-*A deterministic encoder inspired by Borges, normal numbers, and the unsettling possibility that every text already exists somewhere.*
+A deterministic encoder inspired by Borges, normal numbers, and the possibility that every text already exists somewhere.
 
 ---
 
 ## Overview
 
 Babel is a command-line encoding tool that transforms arbitrary data into streams of printable ASCII characters using a deterministic, sort-of-reversible mapping.
-
-The project was originally created as a companion artifact for the video essay:
-
-**"Is Everything Already Written?"**
 
 The central idea is simple:
 
@@ -76,6 +72,12 @@ python3 babel.py --decode "X!a92m..."
 python3 babel.py --decode --offset 50000 "X!a92m..."
 ```
 
+### Encode pi to n digits
+
+```bash
+python3 babel.py --pi 1000
+```
+
 ---
 
 ## Command-Line Options
@@ -86,17 +88,16 @@ python3 babel.py --decode --offset 50000 "X!a92m..."
 | `--decode` | Decode instead of encode |
 | `--offset N` | Apply deterministic stream offset |
 | `-h`, `--help` | Show help message |
+| `-pi`, `--pi` | Use pi to a specified number of digits|
 
 ---
 
 ## Philosophy
 
-Babel is partially inspired by:
+Babel is inspired by:
 
-- Jorge Luis Borges’ *The Library of Babel*
-- normal numbers and digit distributions
+- Jorge Luis Borges’ *The Library of Babel*, 1941.
 - deterministic chaos
-- information theory
 - emergence and computability
 
 An encoded stream may appear meaningless, while still deterministically containing recoverable structure.
@@ -105,7 +106,7 @@ An encoded stream may appear meaningless, while still deterministically containi
 
 ## Important Note
 
-Babel is **not intended to be cryptographically secure**.
+Babel is **NOT intended to be cryptographically secure**.
 
 Although the output may resemble ciphertext, the project is designed for:
 - artistic experimentation,
